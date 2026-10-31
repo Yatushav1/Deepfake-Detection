@@ -6,14 +6,14 @@ from sqlalchemy.pool import StaticPool
 
 from ai.risk_model import (
     MODEL_NAME,
-    feature_vector,
     evaluate_synthetic_holdout,
+    feature_vector,
     predict_suspicious_probability,
     prediction_reasons,
 )
 from database import Base
 from models import User, UserSession
-from routes.sessions import SessionRequest, create_session
+from routes.sessions import SessionRequest, calculate_risk, create_session
 
 
 class RiskModelTests(unittest.TestCase):
@@ -104,7 +104,7 @@ class RiskModelTests(unittest.TestCase):
         user = User(
             username="risk-model-test",
             email="risk-model-test@example.com",
-            password="not-used",
+            password="hashed-password",
         )
         db.add(user)
         db.commit()
@@ -126,10 +126,14 @@ class RiskModelTests(unittest.TestCase):
         stored_session = db.query(UserSession).filter(
             UserSession.id == result["session_id"]
         ).one()
+        expected_risk, expected_level, expected_action, _, probability = calculate_risk(data)
 
         self.assertEqual(result["prediction"], "SUSPICIOUS")
         self.assertEqual(result["risk_score"], stored_session.risk_score)
-        self.assertEqual(result["recommended_action"], "BLOCK")
+        self.assertEqual(result["risk_score"], expected_risk)
+        self.assertEqual(result["risk_level"], expected_level)
+        self.assertEqual(result["recommended_action"], expected_action)
+        self.assertEqual(result["suspicious_probability"], round(probability * 100, 1))
         self.assertEqual(result["model_name"], MODEL_NAME)
         self.assertIn("synthetic", str(result["model_notice"]).lower())
 

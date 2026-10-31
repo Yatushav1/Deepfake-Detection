@@ -2,24 +2,19 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from routes.auth import router as auth_router
 from routes.sessions import router as session_router
-
 from database import engine
 from models import Base
 
 
-
-# Create database tables
 Base.metadata.create_all(bind=engine)
-
-
 app = FastAPI(
     title="AuthPulse AI",
-    description="Identity Threat Detection & Response System",
+    description="Authentication session records and rules-based risk assessments",
     version="1.0.0"
 )
-
 
 allowed_origins = [
     origin.strip()
@@ -50,12 +45,13 @@ def home():
     return {
         "project": "AuthPulse AI",
         "status": "online",
-        "message": "Identity Threat Detection & Response System"
+        "message": "Authentication session records and rules-based risk assessments",
     }
-
 
 @app.get("/health")
 def health():
+    with engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
     return {
         "status": "healthy",
         "database": "connected"

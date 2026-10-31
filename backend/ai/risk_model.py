@@ -6,8 +6,8 @@ from sklearn.metrics import accuracy_score, f1_score  # pyright: ignore[reportMi
 
 MODEL_NAME = "AuthPulse Synthetic Risk Forest v1"
 MODEL_NOTICE = (
-    "Prototype model trained on synthetic scenarios; not validated for "
-    "production authentication decisions."
+    "Trained on generated synthetic scenarios, not real labeled sign-in data. "
+    "Predictions are a prototype and are not validated for production decisions."
 )
 FEATURE_NAMES = (
     "failed_attempts",
@@ -107,7 +107,6 @@ def predict_suspicious_probability(data: RiskFeatures) -> float:
     suspicious_class_index = list(_model.classes_).index(1)
     return float(probabilities[suspicious_class_index])
 
-
 def evaluate_synthetic_holdout() -> dict[str, float | int]:
     samples, labels = _sample_training_data(
         seed=2026,
@@ -120,7 +119,6 @@ def evaluate_synthetic_holdout() -> dict[str, float | int]:
         "sample_count": len(labels),
         "suspicious_sample_count": sum(labels),
     }
-
 
 def prediction_reasons(data: RiskFeatures) -> list[str]:
     reasons: list[str] = []
