@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.auth import router as auth_router
@@ -19,13 +21,27 @@ app = FastAPI(
 )
 
 
-# CORS
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "AUTHPULSE_ALLOWED_ORIGINS",
+        "http://127.0.0.1:5173,http://localhost:5173",
+    ).split(",")
+    if origin.strip()
+]
+allowed_origins = [
+    origin
+    if origin.startswith(("http://", "https://"))
+    else f"https://{origin}"
+    for origin in allowed_origins
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 app.include_router(auth_router)
 app.include_router(session_router)

@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: authpulse-api
+    runtime: python
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    disk:
+      name: authpulse-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////var/data/authpulse.db
+      - key: AUTHPULSE_SECRET_KEY
+        generateValue: true
+      - key: AUTHPULSE_ALLOWED_ORIGINS
+        fromService:
+          type: static
+          name: authpulse-dashboard
+          property: host
+
+  - type: static
+    name: authpulse-dashboard
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: authpulse-api
+          property: host
